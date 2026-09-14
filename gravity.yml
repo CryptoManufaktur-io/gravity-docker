@@ -1,0 +1,80 @@
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 100m
+      max-file: "3"
+      tag: '{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}'
+
+services:
+  gravity:
+    image: ${GRAVITY_IMAGE:-ghcr.io/galxe/gravity_node}:${IMAGE_TAG:-v1.9.1}
+    container_name: gravity
+    pull_policy: always
+    restart: unless-stopped
+
+    # gravity_node's own entrypoint.sh (baked into the image) reads
+    # config/reth_config.json and execs `gravity_node node <flags>` — no
+    # override needed here. Confirmed from the image's Dockerfile:
+    # ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint.sh"],
+    # CMD ["node"]. Listed explicitly below only for clarity.
+    command: ["node"]
+
+    # consensus_db (AptosBFT/RocksDB, same storage family as aptos-node's
+    # AptosDB) needs real time to flush on shutdown. aptos.yml uses 5m for
+    # the same reason; Galxe's own compose uses 60s, which risks a SIGKILL
+    # mid-flush on a multi-hundred-GB db. Following Aptos precedent here.
+    stop_grace_period: 5m
+
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+
+    environment:
+      - RUST_BACKTRACE=1
+      - RUST_LOG=${RUST_LOG:-info}
+
+    volumes:
+      - ./config:/gravity/config:ro
+      - gravity-data:/gravity/data
+      - gravity-logs:/gravity/logs
+
+    ports:
+      # PUBLIC_PORT only — must be non-remapped (host == container) since
+      # this is the port advertised to peers. Everything else (RPC,
+      # metrics, inspection, authrpc, reth-p2p) stays container-internal;
+      # traefik reaches RPC over the shared docker network via labels
+      # below, same division as aptos.yml (which also only publishes its
+      # P2P port here, leaving API/8080 to the optional rpc-shared.yml).
+      - ${PUBLIC_PORT:-26180}:${PUBLIC_PORT:-26180}
+
+    <<: *logging
+
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${RPC_HOST}.service=${RPC_HOST}
+      - traefik.http.routers.${RPC_HOST}.entrypoints=websecure
+      - traefik.http.routers.${RPC_HOST}.rule=Host(`${RPC_HOST}.${DOMAIN}`)
+      - traefik.http.routers.${RPC_HOST}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${RPC_HOST}lb.service=${RPC_HOST}
+      - traefik.http.routers.${RPC_HOST}lb.entrypoints=websecure
+      - traefik.http.routers.${RPC_HOST}lb.rule=Host(`${RPC_LB}.${DOMAIN}`)
+      - traefik.http.routers.${RPC_HOST}lb.tls.certresolver=letsencrypt
+      # Points traefik at the container's own internal RPC port (8545),
+      # not any host-published port — traefik reaches it via the shared
+      # docker network's internal container IP, same as aptos.yml's
+      # loadbalancer.server.port=8080.
+      - traefik.http.services.${RPC_HOST}.loadbalancer.server.port=${RPC_PORT:-8545}
+
+      # Metrics scraped over the shared docker network, not host-published
+      # — mirrors aptos.yml's metrics.* labels exactly.
+      - metrics.scrape=true
+      - metrics.path=/metrics
+      - metrics.port=${METRICS_PORT:-9001}
+      - metrics.network=gravity-mainnet
+
+volumes:
+  gravity-data:
+  gravity-logs:
+  

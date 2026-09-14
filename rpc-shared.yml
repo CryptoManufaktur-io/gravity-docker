@@ -1,0 +1,5 @@
+services:
+  gravity:
+    ports:
+      - "${SHARE_IP}:${RPC_PORT:-8545}:8545"
+      
