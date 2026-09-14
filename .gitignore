@@ -5,3 +5,4 @@
 *.bak
 *.original
 custom.yml
+.venv/

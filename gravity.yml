@@ -77,4 +77,3 @@ services:
 volumes:
   gravity-data:
   gravity-logs:
-  
