@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-__project_name="X Docker"
-__app_name="X node"
-__sample_service="X-geth"
+__project_name="Gravity Docker"
+__app_name="gravity node"
+__sample_service="gravity"
 __docker_exe="docker"
 __old_docker=0
 __docker_sudo=""
@@ -57,8 +57,8 @@ version() {
 # Multiple clients are in multiple case statements. Mutually exclusive clients are in one case statement
 # Avoid the use of ;;&
   case "${__value}" in
-    *x.yml* )
-      __docompose exec x-geth x-geth version
+    *gravity.yml* )
+      __docompose exec gravity gravity_node --version
       ;;
   esac
 }
