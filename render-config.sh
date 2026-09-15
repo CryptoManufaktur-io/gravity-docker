@@ -43,10 +43,20 @@ mkdir -p config
 curl -fsSL "${TPL_BASE}/public_full_node.yaml.tpl" | envsubst > config/public_full_node.yaml
 
 if [[ -n "${PRUNE_TRANSACTIONLOOKUP_DISTANCE:-}" ]]; then
-  curl -fsSL "${TPL_BASE}/reth_config_pfn_prune.json.tpl" | envsubst > config/reth_config.json
+  RETH_TPL="reth_config_pfn_prune.json.tpl"
 else
-  curl -fsSL "${TPL_BASE}/reth_config_pfn.json.tpl" | envsubst > config/reth_config.json
+  RETH_TPL="reth_config_pfn.json.tpl"
 fi
+
+curl -fsSL "${TPL_BASE}/${RETH_TPL}" | envsubst | \
+  jq --arg port "${WS_PORT}" --arg api "${RPC_HTTP_API}" '
+    .reth_args += {
+      "ws": "",
+      "ws.port": ($port | tonumber),
+      "ws.addr": "0.0.0.0",
+      "ws.api": $api
+    }
+  ' > config/reth_config.json
 
 echo "Rendered config/public_full_node.yaml and config/reth_config.json"
 jq . config/reth_config.json > /dev/null && echo "reth_config.json OK"

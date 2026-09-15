@@ -21,9 +21,9 @@ services:
     command: ["node"]
 
     # consensus_db (AptosBFT/RocksDB, same storage family as aptos-node's
-    # AptosDB) needs real time to flush on shutdown. aptos.yml uses 5m for
-    # the same reason; Galxe's own compose uses 60s, which risks a SIGKILL
-    # mid-flush on a multi-hundred-GB db. Following Aptos precedent here.
+    # AptosDB) needs real time to flush on shutdown.
+    # Galxe's compose uses 60s, which risks a SIGKILL
+    # mid-flush on a multi-hundred-GB db.
     stop_grace_period: 5m
 
     ulimits:
@@ -63,12 +63,19 @@ services:
       - traefik.http.routers.${RPC_HOST}lb.tls.certresolver=letsencrypt
       # Points traefik at the container's own internal RPC port (8545),
       # not any host-published port — traefik reaches it via the shared
-      # docker network's internal container IP, same as aptos.yml's
+      # docker network's internal container IP
       # loadbalancer.server.port=8080.
       - traefik.http.services.${RPC_HOST}.loadbalancer.server.port=${RPC_PORT:-8545}
-
+      - traefik.http.routers.${WS_HOST}.service=${WS_HOST}
+      - traefik.http.routers.${WS_HOST}.entrypoints=websecure
+      - traefik.http.routers.${WS_HOST}.rule=Host(`${WS_HOST}.${DOMAIN}`)
+      - traefik.http.routers.${WS_HOST}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${WS_HOST}lb.service=${WS_HOST}
+      - traefik.http.routers.${WS_HOST}lb.entrypoints=websecure
+      - traefik.http.routers.${WS_HOST}lb.rule=Host(`${WS_LB}.${DOMAIN}`)
+      - traefik.http.routers.${WS_HOST}lb.tls.certresolver=letsencrypt
+      - traefik.http.services.${WS_HOST}.loadbalancer.server.port=${WS_PORT:-8546}
       # Metrics scraped over the shared docker network, not host-published
-      # — mirrors aptos.yml's metrics.* labels exactly.
       - metrics.scrape=true
       - metrics.path=/metrics
       - metrics.port=${METRICS_PORT:-9001}
