@@ -21,7 +21,7 @@ services:
     command: ["node"]
 
     # consensus_db (AptosBFT/RocksDB, same storage family as aptos-node's
-    # AptosDB) needs real time to flush on shutdown. 
+    # AptosDB) needs real time to flush on shutdown.
     # Galxe's compose uses 60s, which risks a SIGKILL
     # mid-flush on a multi-hundred-GB db.
     stop_grace_period: 5m
