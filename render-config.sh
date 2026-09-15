@@ -32,6 +32,10 @@ export PFN_SEEDS_BLOCK='    seeds:
       "0x2a45f016fcd7798df5e525b8acda5af597838439e35cee8dab26f80d904385a7":
         addresses:
           - "/dns/mainnet-rpc-p2p-4.gravity.xyz/tcp/6180/noise-ik/c55a7fc6d36b6bad00363e17c31cf38690d307ec9b14ecd5d8170aa67adb5c61/handshake/0"
+        role: PreferredUpstream
+      "0xe9a388c8f38bdbf9af3875316a40e4ae528aff1446b096a00de0042ade004973":
+        addresses:
+          - "/dns/mainnet-rpc-p2p-5.gravity.xyz/tcp/6180/noise-ik/c0f8067d35140f946aa7ccdcc1a0c153e7d25e78f0b2419d87df5600770a6c4b/handshake/0"
         role: PreferredUpstream'
 
 mkdir -p config
