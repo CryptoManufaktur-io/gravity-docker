@@ -34,6 +34,7 @@ services:
     environment:
       - RUST_BACKTRACE=1
       - RUST_LOG=${RUST_LOG:-info}
+      - ENABLE_FORWARD_EPOCH_SYNC=${ENABLE_FORWARD_EPOCH_SYNC:-true}
 
     volumes:
       - ./config:/gravity/config:ro
