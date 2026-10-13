@@ -48,14 +48,20 @@ else
   RETH_TPL="reth_config_pfn.json.tpl"
 fi
 
+# With transaction lookup pruning, sender recovery must not be pruned
+EXTRA_RETH_ARGS='{}'
+if [[ -n "${PRUNE_TRANSACTIONLOOKUP_DISTANCE:-}" ]]; then
+  EXTRA_RETH_ARGS='{"prune.sender-recovery.before": 0}'
+fi
+
 curl -fsSL "${TPL_BASE}/${RETH_TPL}" | envsubst | \
-  jq --arg port "${WS_PORT}" --arg api "${RPC_HTTP_API}" '
-    .reth_args += {
+  jq --arg port "${WS_PORT}" --arg api "${RPC_HTTP_API}" --argjson extra "${EXTRA_RETH_ARGS}" '
+    .reth_args += ({
       "ws": "",
       "ws.port": ($port | tonumber),
       "ws.addr": "0.0.0.0",
       "ws.api": $api
-    }
+    } + $extra)
   ' > config/reth_config.json
 
 echo "Rendered config/public_full_node.yaml and config/reth_config.json"
