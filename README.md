@@ -46,6 +46,10 @@ docker compose --env-file .env up -d
 docker compose logs -f
 ```
 
+## Public RPC namespaces
+
+`RPC_HTTP_API` in `default.env` lists the namespaces served over both HTTP and WebSocket (it is written to `config/reth_config.json` as `http.api` and `ws.api`), and it does not include `debug`, which allows rewinding the chain head and profiling the node. To re-enable it, set `RPC_HTTP_API=eth,net,trace,txpool,web3,rpc,debug` in your untracked `.env`, re-run `bash render-config.sh` (it regenerates the untracked `config/reth_config.json`) and re-create the container with `docker compose up -d --force-recreate`; no tracked file needs editing.
+
 ## Verify
 
 ```bash
